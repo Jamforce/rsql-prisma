@@ -204,10 +204,10 @@ const defaultOperatorMap: OperatorMap = {
     [node.left.selector]: { lte: getScalarValue(node.right.value) },
   }),
   [IN]: (node: ComparisonNode) => ({
-    [node.left.selector]: { in: node.right.value },
+    [node.left.selector]: { in: (node.right.value as []).map(value => coerceValue(value)) },
   }),
   [OUT]: (node: ComparisonNode) => ({
-    [node.left.selector]: { notIn: node.right.value },
+    [node.left.selector]: { notIn: (node.right.value as []).map(value => coerceValue(value)) },
   }),
 };
 
