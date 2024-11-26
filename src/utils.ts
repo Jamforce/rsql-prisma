@@ -40,5 +40,8 @@ export const coerceValue = (value: string): string | number | boolean | Date => 
   if (value.toLowerCase() === 'false') {
     return false;
   }
+  if (value.startsWith('[') && value.endsWith(']')) {
+    return JSON.parse(value);
+  }
   return value;
 }
