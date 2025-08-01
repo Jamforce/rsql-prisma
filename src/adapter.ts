@@ -216,6 +216,8 @@ defaultOperatorMap[GE_VERBOSE] = defaultOperatorMap[GE];
 defaultOperatorMap[LT_VERBOSE] = defaultOperatorMap[LT];
 defaultOperatorMap[LE_VERBOSE] = defaultOperatorMap[LE];
 
+export { defaultOperatorMap };
+
 /**
  * Merges two filter queries into one.
  *

@@ -13,8 +13,8 @@ const RSQL_WILDCARD = '*';
 const ORM_WILDCARD = '';
 
 export const isLike = (value: string): boolean => value.startsWith(RSQL_WILDCARD) && value.endsWith(RSQL_WILDCARD);
-export const isStartsWith = (value: string): boolean => value.startsWith(RSQL_WILDCARD) && !value.endsWith(RSQL_WILDCARD);
-export const isEndsWith = (value: string): boolean => value.endsWith(RSQL_WILDCARD) && !value.startsWith(RSQL_WILDCARD);
+export const isStartsWith = (value: string): boolean => !value.startsWith(RSQL_WILDCARD) && value.endsWith(RSQL_WILDCARD);
+export const isEndsWith = (value: string): boolean => value.startsWith(RSQL_WILDCARD) && !value.endsWith(RSQL_WILDCARD);
 
 export const convertWildcards = (val: string): string => {
   let convertedValue = val;

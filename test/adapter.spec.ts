@@ -64,10 +64,10 @@ describe('adapt', () => {
   });
 
   it('should be like compare', () => {
-    expect(sut('name==*John')).toMatchObject({
+    expect(sut('name==John*')).toMatchObject({
       name: { startsWith: 'John' },
     });
-    expect(sut('name==John*')).toMatchObject({
+    expect(sut('name==*John')).toMatchObject({
       name: { endsWith: 'John' },
     });
     expect(sut('name==*John*')).toMatchObject({
