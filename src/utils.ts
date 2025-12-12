@@ -1,14 +1,3 @@
-export const isDate = <T>(value: T): boolean => {
-  if (typeof value !== 'string') return false;
-  const dateRegex =
-    /\d{4}-\d{2}-\d{2}T?(\d{2}:\d{2}:\d{2})?(\+\d{2}:\d{2}Z?)?/gm;
-  return !!value.match(dateRegex)?.length;
-};
-
-export const getScalarValue = <T>(value: T) => {
-  return isDate(value) ? new Date(value as unknown as string) : +value;
-};
-
 const RSQL_WILDCARD = '*';
 const ORM_WILDCARD = '';
 
@@ -28,20 +17,32 @@ export const convertWildcards = (val: string): string => {
 };
 
 export const coerceValue = (value: string): string | number | boolean | Date => {
-  if (isDate(value)) {
-    return new Date(value);
+  
+  const trimmed = value.trim();
+
+  if (trimmed.toLocaleLowerCase() === 'true') return true;
+  if (trimmed.toLocaleLowerCase() === 'false') return false;
+
+  if (trimmed !== "" && !isNaN(+trimmed)) {
+    if (!(trimmed.length > 1 && trimmed.startsWith('0'))) {
+      return Number(value);
+    }
   }
-  if (!isNaN(Number(value))) {
-    return Number(value);
+
+  const isoDateRegex = /^\d{4}-\d{2}-\d{2}(T[\d:.+-Z+])?$/;
+  if (isoDateRegex.test(trimmed)) {
+    const timestamp = Date.parse(trimmed);
+    if (!isNaN(timestamp)) {
+      return new Date(timestamp);
+    }
   }
-  if (value.toLowerCase() === 'true') {
-    return true;
-  }
-  if (value.toLowerCase() === 'false') {
-    return false;
-  }
-  if (value.startsWith('[') && value.endsWith(']')) {
+
+  if (
+    (value.startsWith('[') && value.endsWith(']')) ||
+    (value.startsWith('{') && value.endsWith('}'))
+  ) {
     return JSON.parse(value);
   }
+
   return value;
 }

@@ -19,7 +19,7 @@ import {
 } from '@rsql/ast';
 import { parse } from '@rsql/parser';
 import { mergeDeepRight, reduceRight } from 'ramda';
-import { getScalarValue, convertWildcards, isLike, isStartsWith, isEndsWith, coerceValue } from './utils';
+import { convertWildcards, isLike, isStartsWith, isEndsWith, coerceValue } from './utils';
 
 interface WhereInput {
   AND?: WhereInput | WhereInput[];
@@ -192,16 +192,16 @@ const defaultOperatorMap: OperatorMap = {
   [EQ]: handleEqual,
   [NEQ]: handleNotEqual,
   [GT]: (node: ComparisonNode) => ({
-    [node.left.selector]: { gt: getScalarValue(node.right.value) },
+    [node.left.selector]: { gt: coerceValue(node.right.value as string) },
   }),
   [GE]: (node: ComparisonNode) => ({
-    [node.left.selector]: { gte: getScalarValue(node.right.value) },
+    [node.left.selector]: { gte: coerceValue(node.right.value as string) },
   }),
   [LT]: (node: ComparisonNode) => ({
-    [node.left.selector]: { lt: getScalarValue(node.right.value) },
+    [node.left.selector]: { lt: coerceValue(node.right.value as string) },
   }),
   [LE]: (node: ComparisonNode) => ({
-    [node.left.selector]: { lte: getScalarValue(node.right.value) },
+    [node.left.selector]: { lte: coerceValue(node.right.value as string) },
   }),
   [IN]: (node: ComparisonNode) => ({
     [node.left.selector]: { in: coerceValue(node.right.value as string) },
