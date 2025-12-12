@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [1.0.4](https://github.com/Jamforce/rsql-prisma/compare/v1.0.3...v1.0.4) (2025-12-12)
+
+### Bug Fixes
+
+- coerce values ([35b94b3](https://github.com/Jamforce/rsql-prisma/commit/35b94b35e611f6239fecf8570d389290851e22a5))
+
 ### [1.0.3](https://github.com/Jamforce/rsql-prisma/compare/v1.0.2...v1.0.3) (2025-08-01)
 
 ### Bug Fixes
