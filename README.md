@@ -9,6 +9,7 @@ For more details about the RSQL specification, please refer to the [FIQL read RF
 
 - [Installation](#installation)
 - [Usage](#usage)
+- [Type Coercion](#type-coercion)
 - [Contributing](#contributing)
 - [License](#license)
 
@@ -52,6 +53,54 @@ rsqlStringToQuery('name==*John*');
 // complex query
 rsqlStringToQuery('title==foo*;(updated>=2024-01-01,title==*bar)');
 ```
+
+## Type Coercion
+
+### Default behavior (no Prisma DMMF provided)
+
+By default, values are **best-effort coerced** using a guessing strategy:
+
+-   true / false → boolean
+
+-   numeric values → number (when safe)
+
+-   ISO date strings → Date
+
+-   JSON-like values → parsed JSON
+
+-   otherwise → string
+
+This ensures backward compatibility and ease of use.
+
+### Deterministic coercion with Prisma DMMF (recommended)
+
+If you provide a Prisma model name, `rsql-prisma` will use **Prisma DMMF** to coerce values **deterministically based on the actual Prisma field type**.
+
+`rsqlStringToQuery('age>=18', { prisma: { model: Prisma.ModelName.Student, dmmf: Prisma.dmmf } });`
+
+Supported Prisma types:
+
+-   `Int`
+
+-   `Float`
+
+-   `Decimal` (coerced to `number`)
+
+-   `BigInt`
+
+-   `Boolean`
+
+-   `DateTime`
+
+-   `Enum`
+
+-   `Json`
+
+-   `String`
+
+For `IN` / `NOT IN` operators, values are automatically split and coerced element by element.
+
+If a field cannot be resolved from the DMMF, the library falls back to the default guessing strategy.
 
 ## Contributing
 

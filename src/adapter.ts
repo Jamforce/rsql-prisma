@@ -19,14 +19,8 @@ import {
 } from '@rsql/ast';
 import { parse } from '@rsql/parser';
 import { mergeDeepRight, reduceRight } from 'ramda';
-import { convertWildcards, isLike, isStartsWith, isEndsWith, coerceValue } from './utils';
-
-interface WhereInput {
-  AND?: WhereInput | WhereInput[];
-  OR?: WhereInput | WhereInput[];
-  NOT?: WhereInput | WhereInput[];
-  [key: string]: any;
-};
+import { convertWildcards, isLike, isStartsWith, isEndsWith, coerceByField, getFieldFromDmmf } from './utils';
+import { OperatorMap, Options, WhereInput } from './types';
 
 
 /**
@@ -145,7 +139,8 @@ const handleEqual = <T extends WhereInput>(
   } else if (isLike(value)) {
     filter[selector] = { contains: convertWildcards(value), mode };
   } else {
-    filter[selector] = { equals: coerceValue(value) };
+    const field = options?.prisma ? getFieldFromDmmf(selector, options.prisma) : null;
+    filter[selector] = { equals: coerceByField(value, field!) };
   }
   return filter as T;
 };
@@ -172,18 +167,12 @@ const handleNotEqual = <T extends WhereInput>(
   } else if (isLike(value)) {
     filter = { NOT: { [selector]: { contains: convertWildcards(value), mode } } };
   } else {
-    filter = { [selector]: { not: coerceValue(value) } };
+    const field = options?.prisma ? getFieldFromDmmf(selector, options.prisma) : null;
+    filter = { [selector]: { not: coerceByField(value, field!) } };
   }
   return filter as T;
 };
 
-/**
- * Type definition for operator mapping.
- */
-type OperatorMap = Record<
-  string,
-  (node: ComparisonNode, options?: Record<string, any>) => WhereInput
->;
 
 /**
  * Default operator mapping for RSQL operators.
@@ -191,24 +180,52 @@ type OperatorMap = Record<
 const defaultOperatorMap: OperatorMap = {
   [EQ]: handleEqual,
   [NEQ]: handleNotEqual,
-  [GT]: (node: ComparisonNode) => ({
-    [node.left.selector]: { gt: coerceValue(node.right.value as string) },
-  }),
-  [GE]: (node: ComparisonNode) => ({
-    [node.left.selector]: { gte: coerceValue(node.right.value as string) },
-  }),
-  [LT]: (node: ComparisonNode) => ({
-    [node.left.selector]: { lt: coerceValue(node.right.value as string) },
-  }),
-  [LE]: (node: ComparisonNode) => ({
-    [node.left.selector]: { lte: coerceValue(node.right.value as string) },
-  }),
-  [IN]: (node: ComparisonNode) => ({
-    [node.left.selector]: { in: coerceValue(node.right.value as string) },
-  }),
-  [OUT]: (node: ComparisonNode) => ({
-    [node.left.selector]: { notIn: coerceValue(node.right.value as string) },
-  }),
+  [GT]: (node: ComparisonNode, options?: Record<string, any>) => {
+    const field = options?.prisma ? getFieldFromDmmf(node.left.selector, options.prisma) : null;
+    const value = coerceByField(node.right.value as string, field!);
+    return {
+      [node.left.selector]: { gt: value },
+    };
+  },
+  [GE]: (node: ComparisonNode, options?: Record<string, any>) => {
+    const field = options?.prisma ? getFieldFromDmmf(node.left.selector, options.prisma) : null;
+    const value = coerceByField(node.right.value as string, field!);
+    return {
+      [node.left.selector]: { gte: value },
+    };
+  },
+  [LT]: (node: ComparisonNode, options?: Record<string, any>) => {
+    const field = options?.prisma ? getFieldFromDmmf(node.left.selector, options.prisma) : null;
+    const value = coerceByField(node.right.value as string, field!);
+    return {
+      [node.left.selector]: { lt: value },
+    };
+  },
+  [LE]: (node: ComparisonNode, options?: Record<string, any>) => {
+    const field = options?.prisma ? getFieldFromDmmf(node.left.selector, options.prisma) : null;
+    const value = coerceByField(node.right.value as string, field!);
+    return {
+      [node.left.selector]: { lte: value },
+    };
+  },
+  [IN]: (node: ComparisonNode, options?: Record<string, any>) => {
+    const field = options?.prisma ? getFieldFromDmmf(node.left.selector, options.prisma) : null;
+    const values = Array.isArray(node.right.value)
+      ? node.right.value
+      : (node.right.value as string).split(',');
+    return {
+      [node.left.selector]: { in: values.map(v => coerceByField(v, field!)) },
+    };
+  },
+  [OUT]: (node: ComparisonNode, options?: Record<string, any>) => {
+    const field = options?.prisma ? getFieldFromDmmf(node.left.selector, options.prisma) : null;
+    const values = Array.isArray(node.right.value)
+      ? node.right.value
+      : (node.right.value as string).split(',');
+    return {
+      [node.left.selector]: { notIn: values.map(v => coerceByField(v, field!)) },
+    };
+  },
 };
 
 defaultOperatorMap[GT_VERBOSE] = defaultOperatorMap[GT];
@@ -251,15 +268,6 @@ const mergeQueries = <T extends WhereInput>(
   }
 
   return mergeResult as T[];
-};
-
-/**
- * Options for RSQL conversion functions.
- */
-export type Options = {
-  caseInsensitive?: boolean;
-  logger?: any;
-  operatorMap?: OperatorMap;
 };
 
 /**
