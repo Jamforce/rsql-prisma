@@ -19,9 +19,15 @@ import {
 } from '@rsql/ast';
 import { parse } from '@rsql/parser';
 import { mergeDeepRight, reduceRight } from 'ramda';
-import { convertWildcards, isLike, isStartsWith, isEndsWith, coerceByField, getFieldFromDmmf } from './utils';
+import {
+  convertWildcards,
+  isLike,
+  isStartsWith,
+  isEndsWith,
+  coerceByField,
+  getFieldFromDmmf,
+} from './utils';
 import { OperatorMap, Options, WhereInput } from './types';
-
 
 /**
  * Converts an RSQL expression node to a Prisma where query.
@@ -62,7 +68,7 @@ const handleLogicalNode = <T extends WhereInput>(
   if (node.operator === AND || node.operator === AND_VERBOSE) {
     return { AND: mergeQueries(leftQuery, rightQuery) } as T;
   }
-  return { OR: mergeQueries(leftQuery, rightQuery) } as T;
+  return { OR: mergeOrQueries(leftQuery, rightQuery) } as T;
 };
 
 /**
@@ -112,9 +118,11 @@ const resolveRelationPath = <T extends WhereInput>(
   const filterValue: WhereInput = filter['NOT']
     ? (filter['NOT'] as WhereInput)[selector]
     : filter[selector];
-  return (relations.length > 1
-    ? relations.reduceRight((acc, curr) => ({ [curr]: acc }), filterValue)
-    : filter) as T;
+  return (
+    relations.length > 1
+      ? relations.reduceRight((acc, curr) => ({ [curr]: acc }), filterValue)
+      : filter
+  ) as T;
 };
 
 /**
@@ -139,7 +147,9 @@ const handleEqual = <T extends WhereInput>(
   } else if (isLike(value)) {
     filter[selector] = { contains: convertWildcards(value), mode };
   } else {
-    const field = options?.prisma ? getFieldFromDmmf(selector, options.prisma) : null;
+    const field = options?.prisma
+      ? getFieldFromDmmf(selector, options.prisma)
+      : null;
     filter[selector] = { equals: coerceByField(value, field!) };
   }
   return filter as T;
@@ -161,18 +171,25 @@ const handleNotEqual = <T extends WhereInput>(
   let filter: WhereInput;
   const mode = options?.caseInsensitive ? 'insensitive' : null;
   if (isStartsWith(value)) {
-    filter = { NOT: { [selector]: { startsWith: convertWildcards(value), mode } } };
+    filter = {
+      NOT: { [selector]: { startsWith: convertWildcards(value), mode } },
+    };
   } else if (isEndsWith(value)) {
-    filter = { NOT: { [selector]: { endsWith: convertWildcards(value), mode } } };
+    filter = {
+      NOT: { [selector]: { endsWith: convertWildcards(value), mode } },
+    };
   } else if (isLike(value)) {
-    filter = { NOT: { [selector]: { contains: convertWildcards(value), mode } } };
+    filter = {
+      NOT: { [selector]: { contains: convertWildcards(value), mode } },
+    };
   } else {
-    const field = options?.prisma ? getFieldFromDmmf(selector, options.prisma) : null;
+    const field = options?.prisma
+      ? getFieldFromDmmf(selector, options.prisma)
+      : null;
     filter = { [selector]: { not: coerceByField(value, field!) } };
   }
   return filter as T;
 };
-
 
 /**
  * Default operator mapping for RSQL operators.
@@ -181,35 +198,45 @@ const defaultOperatorMap: OperatorMap = {
   [EQ]: handleEqual,
   [NEQ]: handleNotEqual,
   [GT]: (node: ComparisonNode, options?: Record<string, any>) => {
-    const field = options?.prisma ? getFieldFromDmmf(node.left.selector, options.prisma) : null;
+    const field = options?.prisma
+      ? getFieldFromDmmf(node.left.selector, options.prisma)
+      : null;
     const value = coerceByField(node.right.value as string, field!);
     return {
       [node.left.selector]: { gt: value },
     };
   },
   [GE]: (node: ComparisonNode, options?: Record<string, any>) => {
-    const field = options?.prisma ? getFieldFromDmmf(node.left.selector, options.prisma) : null;
+    const field = options?.prisma
+      ? getFieldFromDmmf(node.left.selector, options.prisma)
+      : null;
     const value = coerceByField(node.right.value as string, field!);
     return {
       [node.left.selector]: { gte: value },
     };
   },
   [LT]: (node: ComparisonNode, options?: Record<string, any>) => {
-    const field = options?.prisma ? getFieldFromDmmf(node.left.selector, options.prisma) : null;
+    const field = options?.prisma
+      ? getFieldFromDmmf(node.left.selector, options.prisma)
+      : null;
     const value = coerceByField(node.right.value as string, field!);
     return {
       [node.left.selector]: { lt: value },
     };
   },
   [LE]: (node: ComparisonNode, options?: Record<string, any>) => {
-    const field = options?.prisma ? getFieldFromDmmf(node.left.selector, options.prisma) : null;
+    const field = options?.prisma
+      ? getFieldFromDmmf(node.left.selector, options.prisma)
+      : null;
     const value = coerceByField(node.right.value as string, field!);
     return {
       [node.left.selector]: { lte: value },
     };
   },
   [IN]: (node: ComparisonNode, options?: Record<string, any>) => {
-    const field = options?.prisma ? getFieldFromDmmf(node.left.selector, options.prisma) : null;
+    const field = options?.prisma
+      ? getFieldFromDmmf(node.left.selector, options.prisma)
+      : null;
     const values = Array.isArray(node.right.value)
       ? node.right.value
       : (node.right.value as string).split(',');
@@ -218,12 +245,16 @@ const defaultOperatorMap: OperatorMap = {
     };
   },
   [OUT]: (node: ComparisonNode, options?: Record<string, any>) => {
-    const field = options?.prisma ? getFieldFromDmmf(node.left.selector, options.prisma) : null;
+    const field = options?.prisma
+      ? getFieldFromDmmf(node.left.selector, options.prisma)
+      : null;
     const values = Array.isArray(node.right.value)
       ? node.right.value
       : (node.right.value as string).split(',');
     return {
-      [node.left.selector]: { notIn: values.map(v => coerceByField(v, field!)) },
+      [node.left.selector]: {
+        notIn: values.map(v => coerceByField(v, field!)),
+      },
     };
   },
 };
@@ -248,7 +279,8 @@ const mergeQueries = <T extends WhereInput>(
 ): T[] => {
   let mergeResult = null;
 
-  ['AND', 'OR'].forEach(operator => {
+  ['AND' /*, 'OR'*/].forEach(operator => {
+    // OR is handled separately in mergeOrQueries
     if (leftQuery[operator] && rightQuery[operator]) {
       //console.log(`BOTH: LEFT: ${JSON.stringify(leftQuery)} RIGHT: ${JSON.stringify(rightQuery)}`)
       mergeResult = [leftQuery, rightQuery];
@@ -268,6 +300,22 @@ const mergeQueries = <T extends WhereInput>(
   }
 
   return mergeResult as T[];
+};
+
+/**
+ * Merges two filter queries into a single flat OR list.
+ */
+const mergeOrQueries = <T extends WhereInput>(
+  leftQuery: WhereInput,
+  rightQuery: WhereInput
+): T[] => {
+  const leftOr = leftQuery['OR'] as WhereInput[] | undefined;
+  const rightOr = rightQuery['OR'] as WhereInput[] | undefined;
+
+  return [
+    ...(leftOr ? leftOr : [leftQuery]),
+    ...(rightOr ? rightOr : [rightQuery]),
+  ] as T[];
 };
 
 /**

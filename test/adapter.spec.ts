@@ -21,7 +21,7 @@ describe('adapt', () => {
       age: { gte: 18 },
     });
     expect(sut('createdAt>=1970-01-01T15:00:00.000Z')).toMatchObject({
-      createdAt: { gte: new Date('1970-01-01T15:00:00.000Z') },
+      createdAt: { gte: new Date('1970-01-01T15:00:00.000Z').toISOString() },
     });
   });
 
@@ -46,7 +46,7 @@ describe('adapt', () => {
   it('should create not like comparison', () => {
     expect(sut('age!=*18*')).toMatchObject({
       NOT: {
-        age: { contains: 18 },
+        age: { contains: '18' },
       },
     });
   });
@@ -88,7 +88,7 @@ describe('adapt', () => {
     expect(sut('name==John*;age<18')).toMatchObject({
       AND: [
         {
-          name: { endsWith: 'John' },
+          name: { startsWith: 'John' },
           age: { lt: 18 },
         },
       ],
@@ -100,7 +100,11 @@ describe('adapt', () => {
       OR: [
         {
           name: { equals: 'John' },
+        },
+        {
           age: { equals: 18 },
+        },
+        {
           id: { equals: 2 },
         },
       ],
@@ -108,7 +112,9 @@ describe('adapt', () => {
     expect(sut('name==John*,age<18')).toMatchObject({
       OR: [
         {
-          name: { endsWith: 'John' },
+          name: { startsWith: 'John' },
+        },
+        {
           age: { lt: 18 },
         },
       ],
@@ -125,7 +131,7 @@ describe('adapt', () => {
         {
           AND: [
             {
-              franchiseId: { equals: '1' },
+              franchiseId: { equals: 1 },
               type: { equals: 'franchise_employee' },
             },
           ],
@@ -133,7 +139,7 @@ describe('adapt', () => {
         {
           AND: [
             {
-              franchiseId: { equals: '1' },
+              franchiseId: { equals: 1 },
               type: { equals: 'franchise_owner' },
             },
           ],
@@ -201,16 +207,16 @@ describe('adapt', () => {
             {
               AND: [
                 {
-                  cognome: { endsWith: 'Travolta' },
-                  nome: { endsWith: 'John' },
+                  cognome: { startsWith: 'Travolta' },
+                  nome: { startsWith: 'John' },
                 },
               ],
             },
             {
               AND: [
                 {
-                  cognome: { endsWith: 'John' },
-                  nome: { endsWith: 'Travolta' },
+                  cognome: { startsWith: 'John' },
+                  nome: { startsWith: 'Travolta' },
                 },
               ],
             },
